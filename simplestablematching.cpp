@@ -3,155 +3,245 @@
 #include <queue>
 #include <algorithm>
 #include <unordered_map>
+#include <string>
+#include <iomanip>
 using namespace std;
 
-// -------------------- Structures --------------------
-
-struct Student {
-    int id;
-    float cgpa;
-    vector<int> preferences;
-    int assignedRoom = -1;
-    size_t prefIndex = 0;   // ✅ FIXED (was int)
-};
+// ─────────────────────────────────────────
+//  STRUCTS  (from Member 1)
+// ─────────────────────────────────────────
 
 struct Room {
-    int id;
-    int capacity;
-    vector<Student*> assignedStudents;
+    int    roomID;
+    string roomType;
+    int    capacity;
+    int    occupied;
 };
 
-// -------------------- Comparator --------------------
+struct Student {
+    int    studentID;
+    string name;
+    float  cgpa;
+    vector<int> preferences;  // list of preferred Room IDs
+    int    assignedRoom = -1;
+    size_t prefIndex    = 0;  // tracks which preference we're trying next
+};
 
-bool compareCGPA(Student* a, Student* b) {
-    return a->cgpa > b->cgpa;
+// ─────────────────────────────────────────
+//  INPUT  (from Member 1)
+// ─────────────────────────────────────────
+
+void addRooms(vector<Room>& rooms) {
+    int n;
+    cout << "\nHow many rooms? ";
+    cin >> n;
+
+    for (int i = 0; i < n; i++) {
+        Room r;
+        cout << "\n-- Room " << (i + 1) << " --\n";
+        cout << "Room ID       : "; cin >> r.roomID;
+        cout << "Type (1=Single 2=Double 3=Triple): ";
+        int t; cin >> t;
+        if      (t == 1) { r.roomType = "Single"; r.capacity = 1; }
+        else if (t == 2) { r.roomType = "Double"; r.capacity = 2; }
+        else             { r.roomType = "Triple"; r.capacity = 3; }
+        r.occupied = 0;
+        rooms.push_back(r);
+    }
+    cout << "Rooms added.\n";
 }
 
-// -------------------- Stable Matching --------------------
+void addStudents(vector<Student>& students) {
+    int n;
+    cout << "\nHow many students? ";
+    cin >> n;
+
+    for (int i = 0; i < n; i++) {
+        Student s;
+        cout << "\n-- Student " << (i + 1) << " --\n";
+        cout << "Student ID    : "; cin >> s.studentID;
+        cout << "Name          : "; cin.ignore(); getline(cin, s.name);
+        cout << "CGPA (0-10)   : "; cin >> s.cgpa;
+
+        int p;
+        cout << "No. of preferences (1-3): "; cin >> p;
+        cout << "Enter preferred Room IDs:\n";
+        for (int j = 0; j < p; j++) {
+            int rid; cin >> rid;
+            s.preferences.push_back(rid);
+        }
+        students.push_back(s);
+    }
+    cout << "Students added.\n";
+}
+
+// ─────────────────────────────────────────
+//  STABLE MATCHING  (Member 3)
+// ─────────────────────────────────────────
 
 void stableMatching(vector<Student>& students, vector<Room>& rooms) {
 
+    // Reset previous allocation
+    for (Student& s : students) {
+        s.assignedRoom = -1;
+        s.prefIndex    = 0;
+    }
+    for (Room& r : rooms) {
+        r.occupied = 0;
+    }
+
+    // roomID → Room pointer for fast lookup
     unordered_map<int, Room*> roomMap;
-    for (auto &room : rooms) {
-        roomMap[room.id] = &room;
-    }
+    for (Room& r : rooms)
+        roomMap[r.roomID] = &r;
 
+    // roomID → assigned students list
+    unordered_map<int, vector<Student*>> roomStudents;
+
+    // All students start as free
     queue<Student*> freeStudents;
-
-    // Initially all students are free
-    for (auto &s : students) {
+    for (Student& s : students)
         freeStudents.push(&s);
-    }
 
     while (!freeStudents.empty()) {
-        Student* student = freeStudents.front();
+        Student* s = freeStudents.front();
         freeStudents.pop();
 
-        // ✅ Safe comparison (both size_t)
-        if (student->prefIndex >= student->preferences.size())
+        // No more preferences left → stays unallocated
+        if (s->prefIndex >= s->preferences.size())
             continue;
 
-        int roomId = student->preferences[student->prefIndex];
-        student->prefIndex++;
+        int roomID = s->preferences[s->prefIndex++];
 
-        // ✅ Check if room exists (prevents crash)
-        if (roomMap.find(roomId) == roomMap.end()) {
-            freeStudents.push(student);
+        // Room doesn't exist → try next preference
+        if (roomMap.find(roomID) == roomMap.end()) {
+            freeStudents.push(s);
             continue;
         }
 
-        Room* room = roomMap[roomId];
+        Room* room = roomMap[roomID];
+        auto& assigned = roomStudents[roomID];
 
-        // If room has space
-        if (room->assignedStudents.size() < (size_t)room->capacity) {
-            room->assignedStudents.push_back(student);
-            student->assignedRoom = roomId;
-        } 
+        // Room has space → assign directly
+        if ((int)assigned.size() < room->capacity) {
+            assigned.push_back(s);
+            s->assignedRoom = roomID;
+            room->occupied++;
+        }
         else {
-            // Room full → try replacement
-            room->assignedStudents.push_back(student);
+            // Room full → check if this student has higher CGPA than lowest
+            assigned.push_back(s);
 
-            sort(room->assignedStudents.begin(), room->assignedStudents.end(), compareCGPA);
+            // Sort descending by CGPA
+            sort(assigned.begin(), assigned.end(),
+                 [](Student* a, Student* b) { return a->cgpa > b->cgpa; });
 
-            Student* removed = room->assignedStudents.back();
-            room->assignedStudents.pop_back();
+            // Kick out the weakest student
+            Student* removed = assigned.back();
+            assigned.pop_back();
 
-            if (removed != student) {
-                student->assignedRoom = roomId;
+            if (removed != s) {
+                // New student gets the room
+                s->assignedRoom = roomID;
 
+                // Removed student goes back in queue
                 removed->assignedRoom = -1;
+                room->occupied--;
                 freeStudents.push(removed);
-            } 
-            else {
-                freeStudents.push(student);
+            } else {
+                // New student was the weakest → try next preference
+                freeStudents.push(s);
             }
         }
     }
 }
 
-// -------------------- Output --------------------
+// ─────────────────────────────────────────
+//  DISPLAY  (from Member 1)
+// ─────────────────────────────────────────
 
-void printAllocation(vector<Student>& students) {
-    cout << "\nFinal Allocation:\n";
-    cout << "Student ID\tAssigned Room\n";
+void showRooms(const vector<Room>& rooms) {
+    if (rooms.empty()) { cout << "\nNo rooms added yet.\n"; return; }
 
-    for (auto &s : students) {
-        cout << s.id << "\t\t";
-        if (s.assignedRoom == -1)
-            cout << "Not Allocated\n";
-        else
-            cout << s.assignedRoom << "\n";
-    }
+    cout << "\n" << string(45, '-') << "\n";
+    cout << left << setw(8)  << "RoomID"
+                 << setw(10) << "Type"
+                 << setw(10) << "Capacity"
+                 << setw(10) << "Occupied" << "\n";
+    cout << string(45, '-') << "\n";
+    for (const Room& r : rooms)
+        cout << left << setw(8)  << r.roomID
+                     << setw(10) << r.roomType
+                     << setw(10) << r.capacity
+                     << setw(10) << r.occupied << "\n";
+    cout << string(45, '-') << "\n";
 }
 
-// -------------------- Main --------------------
+void showStudents(const vector<Student>& students) {
+    if (students.empty()) { cout << "\nNo students added yet.\n"; return; }
+
+    cout << "\n" << string(55, '-') << "\n";
+    cout << left << setw(10) << "ID"
+                 << setw(16) << "Name"
+                 << setw(8)  << "CGPA"
+                 << setw(12) << "Assigned" << "\n";
+    cout << string(55, '-') << "\n";
+    for (const Student& s : students)
+        cout << left << setw(10) << s.studentID
+                     << setw(16) << s.name
+                     << setw(8)  << fixed << setprecision(2) << s.cgpa
+                     << setw(12) << (s.assignedRoom == -1 ? "Not Assigned" : to_string(s.assignedRoom))
+                     << "\n";
+    cout << string(55, '-') << "\n";
+}
+
+void showAllocationResult(const vector<Student>& students) {
+    int allocated = 0;
+    for (const Student& s : students)
+        if (s.assignedRoom != -1) allocated++;
+
+    cout << "\n--- Stable Matching Result ---\n";
+    showStudents(students);
+    cout << "Allocated   : " << allocated << "\n";
+    cout << "Unallocated : " << students.size() - allocated << "\n";
+}
+
+// ─────────────────────────────────────────
+//  MAIN MENU
+// ─────────────────────────────────────────
 
 int main() {
+    vector<Room>    rooms;
+    vector<Student> students;
+    int choice;
 
-    int n, m;
+    cout << "==============================\n";
+    cout << "  Hostel Allocation — M3\n";
+    cout << "==============================\n";
 
-    cout << "Enter number of students: ";
-    cin >> n;
+    do {
+        cout << "\n1. Add Rooms\n"
+                "2. Add Students\n"
+                "3. Show Rooms\n"
+                "4. Show Students\n"
+                "5. Run Stable Matching\n"
+                "0. Exit\n"
+                "Choice: ";
+        cin >> choice;
 
-    vector<Student> students(n);
-
-    for (int i = 0; i < n; i++) {
-        cout << "\nStudent " << i + 1 << " ID: ";
-        cin >> students[i].id;
-
-        cout << "CGPA: ";
-        cin >> students[i].cgpa;
-
-        int p;
-        cout << "Number of preferences: ";
-        cin >> p;
-
-        cout << "Enter preferred Room IDs:\n";
-        for (int j = 0; j < p; j++) {
-            int roomId;
-            cin >> roomId;
-            students[i].preferences.push_back(roomId);
+        if      (choice == 1) addRooms(rooms);
+        else if (choice == 2) addStudents(students);
+        else if (choice == 3) showRooms(rooms);
+        else if (choice == 4) showStudents(students);
+        else if (choice == 5) {
+            if (students.empty() || rooms.empty()) {
+                cout << "Add students and rooms first.\n";
+            } else {
+                stableMatching(students, rooms);
+                showAllocationResult(students);
+            }
         }
-    }
-
-    cout << "\nEnter number of rooms: ";
-    cin >> m;
-
-    vector<Room> rooms(m);
-
-    for (int i = 0; i < m; i++) {
-        cout << "\nRoom " << i + 1 << " ID: ";
-        cin >> rooms[i].id;
-
-        cout << "Capacity: ";
-        cin >> rooms[i].capacity;
-    }
-
-    // Run algorithm
-    stableMatching(students, rooms);
-
-    // Output result
-    printAllocation(students);
+    } while (choice != 0);
 
     return 0;
 }
