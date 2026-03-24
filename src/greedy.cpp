@@ -2,25 +2,35 @@
 #include <vector>
 #include <algorithm>
 #include <chrono>
-
 using namespace std;
 
+// ================= STRUCTS =================
+
 struct Student {
-    int id;
-    double cgpa;
+    int studentID;
+    float cgpa;
     vector<int> preferences;
-    int assignedRoom = -1;
+
+    int assignedRoomID = -1;
+    bool allocated = false;
 };
 
 struct Room {
-    int id;
+    int roomID;
     int capacity;
-    int filled = 0;
+    int occupied = 0;
+    bool isAvailable = true;
+
+    int availableSeats() const {
+        return capacity - occupied;
+    }
 };
+
+// ================= GREEDY =================
 
 void greedyAllocation(vector<Student>& students, vector<Room>& rooms) {
 
-    // Sort students by CGPA (highest first)
+    // Sort by CGPA (high → low)
     sort(students.begin(), students.end(),
          [](Student &a, Student &b) {
              return a.cgpa > b.cgpa;
@@ -32,18 +42,26 @@ void greedyAllocation(vector<Student>& students, vector<Room>& rooms) {
 
             for (auto &r : rooms) {
 
-                if (r.id == pref && r.filled < r.capacity) {
-                    s.assignedRoom = r.id;
-                    r.filled++;
+                if (r.roomID == pref &&
+                    r.isAvailable &&
+                    r.availableSeats() > 0) {
+
+                    s.assignedRoomID = r.roomID;
+                    s.allocated = true;
+
+                    r.occupied++;
+
                     break;
                 }
             }
 
-            if (s.assignedRoom != -1)
+            if (s.allocated)
                 break;
         }
     }
 }
+
+// ================= STATS =================
 
 void calculateStats(vector<Student>& students) {
 
@@ -51,11 +69,12 @@ void calculateStats(vector<Student>& students) {
     int unallocated = 0;
 
     for (auto &s : students) {
-        if (s.assignedRoom == -1) {
+
+        if (!s.allocated) {
             unallocated++;
         }
         else if (!s.preferences.empty() &&
-                 s.assignedRoom == s.preferences[0]) {
+                 s.assignedRoomID == s.preferences[0]) {
             firstPref++;
         }
     }
@@ -67,6 +86,8 @@ void calculateStats(vector<Student>& students) {
     cout << "Unallocated Students: "
          << unallocated << endl;
 }
+
+// ================= MAIN =================
 
 int main() {
 
@@ -85,7 +106,7 @@ int main() {
     cout << "\nEnter Room Details:\n";
     for (int i = 0; i < nRooms; i++) {
         cout << "Room ID and Capacity: ";
-        cin >> rooms[i].id >> rooms[i].capacity;
+        cin >> rooms[i].roomID >> rooms[i].capacity;
     }
 
     // Input Students
@@ -93,7 +114,7 @@ int main() {
     for (int i = 0; i < nStudents; i++) {
 
         cout << "Student ID and CGPA: ";
-        cin >> students[i].id >> students[i].cgpa;
+        cin >> students[i].studentID >> students[i].cgpa;
 
         int prefCount;
         cout << "Number of Preferences: ";
@@ -115,13 +136,14 @@ int main() {
 
     auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
 
+    // Output
     cout << "\n--- Allocation Result ---\n";
     for (auto &s : students) {
-        cout << "Student " << s.id << " -> ";
-        if (s.assignedRoom == -1)
+        cout << "Student " << s.studentID << " -> ";
+        if (!s.allocated)
             cout << "Not Allocated\n";
         else
-            cout << "Room " << s.assignedRoom << "\n";
+            cout << "Room " << s.assignedRoomID << "\n";
     }
 
     calculateStats(students);
