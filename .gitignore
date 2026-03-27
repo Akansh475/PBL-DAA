@@ -1,0 +1,7 @@
+node_modules/
+*.DS_Store
+allocation_app
+api_engine
+output/
+*.o
+*.exe
