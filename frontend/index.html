@@ -1,197 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hostel Room Allocator — DAA PBL</title>
-  <meta name="description" content="Interactive visualizer for Hostel Room Allocation using Greedy Algorithm. Input students and rooms, run allocation, and see results instantly." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <title>Hostel Room Allocation</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-  <!-- Background blobs -->
-  <div class="bg-blob blob-1"></div>
-  <div class="bg-blob blob-2"></div>
-  <div class="bg-blob blob-3"></div>
-
-  <header class="header">
-    <div class="header-inner">
-      <div class="logo">
-        <span class="logo-icon">🏫</span>
-        <span class="logo-text">HostelAlloc</span>
-        <span class="logo-badge">DAA PBL</span>
-      </div>
-      <nav class="nav-pills">
-        <button class="pill active" data-tab="setup" id="tab-setup">Setup</button>
-        <button class="pill" data-tab="result" id="tab-result">Results</button>
-        <button class="pill" data-tab="compare" id="tab-compare">Comparison</button>
-      </nav>
+<header class="header">
+  <div class="header-inner">
+    <h1>Hostel Room Allocation</h1>
+    <div>
+      <button class="tab active" data-tab="setup" id="tab-setup">Setup</button>
+      <button class="tab" data-tab="result" id="tab-result">Results</button>
+      <button class="tab" data-tab="compare" id="tab-compare">Compare</button>
     </div>
-  </header>
+  </div>
+</header>
 
-  <main class="main">
+<main class="main">
 
-    <!-- ===== SETUP TAB ===== -->
-    <section class="tab-content active" id="tab-content-setup">
+  <!-- SETUP -->
+  <section class="tab-content active" id="tab-content-setup">
 
-      <div class="hero">
-        <h1 class="hero-title">Hostel Room <span class="gradient-text">Allocation</span></h1>
-        <p class="hero-sub">Greedy Algorithm · Stable Matching · Real-time Visualization</p>
-      </div>
-
-      <div class="grid-2">
-
-        <!-- Rooms Panel -->
-        <div class="card" id="rooms-card">
-          <div class="card-header">
-            <span class="card-icon">🚪</span>
-            <h2 class="card-title">Rooms</h2>
-            <button class="btn-add" id="add-room-btn">+ Add Room</button>
-          </div>
-          <div class="card-body" id="rooms-list">
-            <!-- room rows injected here -->
-          </div>
-        </div>
-
-        <!-- Students Panel -->
-        <div class="card" id="students-card">
-          <div class="card-header">
-            <span class="card-icon">🎓</span>
-            <h2 class="card-title">Students</h2>
-            <button class="btn-add" id="add-student-btn">+ Add Student</button>
-          </div>
-          <div class="card-body" id="students-list">
-            <!-- student rows injected here -->
-          </div>
-        </div>
-
-      </div>
-
-      <div class="run-bar">
-        <button class="btn-run" id="run-btn">
-          <span class="btn-run-icon">⚡</span> Run Allocation
-        </button>
-        <button class="btn-reset" id="reset-btn">Reset</button>
-      </div>
-
-    </section>
-
-    <!-- ===== RESULTS TAB ===== -->
-    <section class="tab-content" id="tab-content-result">
-
-      <div class="stats-row" id="stats-row">
-        <div class="stat-card">
-          <span class="stat-value" id="stat-allocated">—</span>
-          <span class="stat-label">Allocated</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-value" id="stat-unallocated">—</span>
-          <span class="stat-label">Unallocated</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-value" id="stat-satisfaction">—</span>
-          <span class="stat-label">Satisfaction</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-value" id="stat-time">—</span>
-          <span class="stat-label">Exec Time</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-value" id="stat-empty-beds">—</span>
-          <span class="stat-label">Empty Beds</span>
-        </div>
-      </div>
-
-      <div class="grid-2">
-        <!-- Allocation Table -->
-        <div class="card">
-          <div class="card-header">
-            <span class="card-icon">📋</span>
-            <h2 class="card-title">Allocation Table</h2>
-          </div>
-          <div class="card-body">
-            <table class="alloc-table" id="alloc-table">
-              <thead>
-                <tr>
-                  <th>Student ID</th>
-                  <th>CGPA</th>
-                  <th>Assigned Room</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="alloc-table-body">
-                <tr><td colspan="4" class="empty-msg">Run allocation to see results</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Room Occupancy -->
-        <div class="card">
-          <div class="card-header">
-            <span class="card-icon">🏠</span>
-            <h2 class="card-title">Room Occupancy</h2>
-          </div>
-          <div class="card-body" id="room-occupancy">
-            <p class="empty-msg">Run allocation to see results</p>
-          </div>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- ===== COMPARE TAB ===== -->
-    <section class="tab-content" id="tab-content-compare">
-      <div class="card compare-card">
+    <div class="section">
+      <h2>Rooms</h2>
+      <div class="card">
         <div class="card-header">
-          <span class="card-icon">⚖️</span>
-          <h2 class="card-title">Algorithm Comparison</h2>
+          <span>Room List</span>
+          <button id="add-room-btn">Add Room</button>
         </div>
-        <div class="card-body">
-          <table class="compare-table" id="compare-table">
-            <thead>
-              <tr>
-                <th>Metric</th>
-                <th>Greedy</th>
-                <th>Stable Matching</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Satisfaction %</td>
-                <td id="cmp-greedy-sat">—</td>
-                <td id="cmp-stable-sat">—</td>
-              </tr>
-              <tr>
-                <td>Unallocated</td>
-                <td id="cmp-greedy-unalloc">—</td>
-                <td id="cmp-stable-unalloc">—</td>
-              </tr>
-              <tr>
-                <td>Empty Beds</td>
-                <td id="cmp-greedy-beds">—</td>
-                <td id="cmp-stable-beds">—</td>
-              </tr>
-              <tr>
-                <td>Exec Time (μs)</td>
-                <td id="cmp-greedy-time">—</td>
-                <td id="cmp-stable-time">—</td>
-              </tr>
-            </tbody>
-          </table>
-          <p class="compare-note" id="compare-note">Run the allocation first to populate the comparison.</p>
-        </div>
+        <div id="rooms-list"></div>
       </div>
-    </section>
+    </div>
 
-  </main>
+    <div class="section">
+      <h2>Students</h2>
+      <div class="card">
+        <div class="card-header">
+          <span>Student List</span>
+          <button id="add-student-btn">Add Student</button>
+        </div>
+        <div id="students-list"></div>
+      </div>
+    </div>
 
-  <!-- Toast -->
-  <div class="toast" id="toast"></div>
+    <div class="actions">
+      <button id="run-btn" class="primary">Run Allocation</button>
+      <button id="reset-btn">Reset</button>
+    </div>
 
-  <script src="app.js"></script>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="tab-content" id="tab-content-result">
+
+    <h2>Results</h2>
+
+    <div class="stats">
+      <div class="stat-box">
+        <p>Allocated</p>
+        <h3 id="stat-allocated"></h3>
+      </div>
+      <div class="stat-box">
+        <p>Unallocated</p>
+        <h3 id="stat-unallocated"></h3>
+      </div>
+      <div class="stat-box">
+        <p>Satisfaction</p>
+        <h3 id="stat-satisfaction"></h3>
+      </div>
+      <div class="stat-box">
+        <p>Time</p>
+        <h3 id="stat-time"></h3>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>CGPA</th>
+          <th>Assigned Room</th>
+        </tr>
+      </thead>
+      <tbody id="alloc-table-body"></tbody>
+    </table>
+
+  </section>
+
+  <!-- COMPARE -->
+  <section class="tab-content" id="tab-content-compare">
+
+    <h2>Algorithm Comparison</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Greedy</th>
+          <th>Stable Matching</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Satisfaction</td>
+          <td id="cmp-greedy-sat"></td>
+          <td id="cmp-stable-sat"></td>
+        </tr>
+        <tr>
+          <td>Unallocated</td>
+          <td id="cmp-greedy-unalloc"></td>
+          <td id="cmp-stable-unalloc"></td>
+        </tr>
+        <tr>
+          <td>Execution Time</td>
+          <td id="cmp-greedy-time"></td>
+          <td id="cmp-stable-time"></td>
+        </tr>
+      </tbody>
+    </table>
+
+  </section>
+
+</main>
+
+<script src="app.js"></script>
 </body>
 </html>
