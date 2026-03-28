@@ -4,7 +4,7 @@
 #include <chrono>
 using namespace std;
 
-// ================= STRUCTS =================
+// Base
 
 struct Student {
     int studentID;
@@ -26,7 +26,7 @@ struct Room {
     }
 };
 
-// ================= GREEDY =================
+// Main Algo
 
 void greedyAllocation(vector<Student>& students, vector<Room>& rooms) {
 
@@ -61,7 +61,7 @@ void greedyAllocation(vector<Student>& students, vector<Room>& rooms) {
     }
 }
 
-// ================= STATS =================
+// Stats
 
 void calculateStats(vector<Student>& students) {
 
@@ -87,7 +87,6 @@ void calculateStats(vector<Student>& students) {
          << unallocated << endl;
 }
 
-// ================= MAIN =================
 
 int main() {
 
